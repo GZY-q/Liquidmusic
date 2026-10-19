@@ -6,11 +6,37 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F22200000000000000000001 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = F22200000000000000000002 /* GRDB */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F112DEAD0000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 88A0B37E3083C5A60089A837 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 88A0B3853083C5A60089A837;
+			remoteInfo = Liquidmusic;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		88027F793083D673004BC4CE /* LiquidmusicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LiquidmusicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		884C5E3030864CE300AB9631 /* LiquidmusicUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LiquidmusicUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		88A0B3863083C5A60089A837 /* Liquidmusic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Liquidmusic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		88027F7A3083D673004BC4CE /* Tests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		884C5E3130864CE300AB9631 /* LiquidmusicUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LiquidmusicUITests;
+			sourceTree = "<group>";
+		};
 		88A0B3883083C5A60089A837 /* Liquidmusic */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Liquidmusic;
@@ -19,9 +45,20 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		88027F763083D673004BC4CE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		884C5E2D30864CE300AB9631 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
 		88A0B3833083C5A60089A837 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				F22200000000000000000001 /* GRDB in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -31,6 +68,8 @@
 			isa = PBXGroup;
 			children = (
 				88A0B3883083C5A60089A837 /* Liquidmusic */,
+				88027F7A3083D673004BC4CE /* Tests */,
+				884C5E3130864CE300AB9631 /* LiquidmusicUITests */,
 				88A0B3873083C5A60089A837 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -39,6 +78,8 @@
 			isa = PBXGroup;
 			children = (
 				88A0B3863083C5A60089A837 /* Liquidmusic.app */,
+				88027F793083D673004BC4CE /* LiquidmusicTests.xctest */,
+				884C5E3030864CE300AB9631 /* LiquidmusicUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -46,6 +87,45 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		88027F783083D673004BC4CE /* LiquidmusicTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 88027F7D3083D673004BC4CE /* Build configuration list for PBXNativeTarget "LiquidmusicTests" */;
+			buildPhases = (
+				88027F753083D673004BC4CE /* Sources */,
+				88027F763083D673004BC4CE /* Frameworks */,
+				88027F773083D673004BC4CE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F112DEAD0000000000000002 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				88027F7A3083D673004BC4CE /* Tests */,
+			);
+			name = LiquidmusicTests;
+			productName = LiquidmusicTests;
+			productReference = 88027F793083D673004BC4CE /* LiquidmusicTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		884C5E2F30864CE300AB9631 /* LiquidmusicUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 884C5E3630864CE300AB9631 /* Build configuration list for PBXNativeTarget "LiquidmusicUITests" */;
+			buildPhases = (
+				884C5E2C30864CE300AB9631 /* Sources */,
+				884C5E2D30864CE300AB9631 /* Frameworks */,
+				884C5E2E30864CE300AB9631 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				884C5E3130864CE300AB9631 /* LiquidmusicUITests */,
+			);
+			name = LiquidmusicUITests;
+			productName = LiquidmusicUITests;
+			productReference = 884C5E3030864CE300AB9631 /* LiquidmusicUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		88A0B3853083C5A60089A837 /* Liquidmusic */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 88A0B3913083C5A70089A837 /* Build configuration list for PBXNativeTarget "Liquidmusic" */;
@@ -60,6 +140,9 @@
 				88A0B3883083C5A60089A837 /* Liquidmusic */,
 			);
 			name = Liquidmusic;
+			packageProductDependencies = (
+				F22200000000000000000002 /* GRDB */,
+			);
 			productName = Liquidmusic;
 			productReference = 88A0B3863083C5A60089A837 /* Liquidmusic.app */;
 			productType = "com.apple.product-type.application";
@@ -74,6 +157,12 @@
 				LastSwiftUpdateCheck = 2710;
 				LastUpgradeCheck = 2710;
 				TargetAttributes = {
+					88027F783083D673004BC4CE = {
+						CreatedOnToolsVersion = 27.1;
+					};
+					884C5E2F30864CE300AB9631 = {
+						CreatedOnToolsVersion = 27.1;
+					};
 					88A0B3853083C5A60089A837 = {
 						CreatedOnToolsVersion = 27.1;
 					};
@@ -88,17 +177,32 @@
 			);
 			mainGroup = 88A0B37D3083C5A60089A837;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F22200000000000000000003 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 88A0B3873083C5A60089A837 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				88A0B3853083C5A60089A837 /* Liquidmusic */,
+				88027F783083D673004BC4CE /* LiquidmusicTests */,
+				884C5E2F30864CE300AB9631 /* LiquidmusicUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		88027F773083D673004BC4CE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		884C5E2E30864CE300AB9631 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
 		88A0B3843083C5A60089A837 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
@@ -107,6 +211,16 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		88027F753083D673004BC4CE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		884C5E2C30864CE300AB9631 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 		88A0B3823083C5A60089A837 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
@@ -114,7 +228,113 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		F112DEAD0000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 88A0B3853083C5A60089A837 /* Liquidmusic */;
+			targetProxy = F112DEAD0000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		88027F7E3083D673004BC4CE /* Debug configuration for PBXNativeTarget "LiquidmusicTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = gede.com.LiquidmusicTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Liquidmusic.app/Contents/MacOS/Liquidmusic";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		88027F7F3083D673004BC4CE /* Release configuration for PBXNativeTarget "LiquidmusicTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = gede.com.LiquidmusicTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Liquidmusic.app/Contents/MacOS/Liquidmusic";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		884C5E3430864CE300AB9631 /* Debug configuration for PBXNativeTarget "LiquidmusicUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = gede.com.LiquidmusicUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		884C5E3530864CE300AB9631 /* Release configuration for PBXNativeTarget "LiquidmusicUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = gede.com.LiquidmusicUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
 		88A0B38F3083C5A70089A837 /* Debug configuration for PBXProject "Liquidmusic" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -169,7 +389,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -227,7 +447,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -240,6 +460,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Liquidmusic/Liquidmusic.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -260,10 +481,10 @@
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -272,6 +493,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Liquidmusic/Liquidmusic.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -292,16 +514,32 @@
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		88027F7D3083D673004BC4CE /* Build configuration list for PBXNativeTarget "LiquidmusicTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				88027F7E3083D673004BC4CE /* Debug configuration for PBXNativeTarget "LiquidmusicTests" */,
+				88027F7F3083D673004BC4CE /* Release configuration for PBXNativeTarget "LiquidmusicTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		884C5E3630864CE300AB9631 /* Build configuration list for PBXNativeTarget "LiquidmusicUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				884C5E3430864CE300AB9631 /* Debug configuration for PBXNativeTarget "LiquidmusicUITests" */,
+				884C5E3530864CE300AB9631 /* Release configuration for PBXNativeTarget "LiquidmusicUITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
 		88A0B3813083C5A60089A837 /* Build configuration list for PBXProject "Liquidmusic" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -319,6 +557,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F22200000000000000000003 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift.git";
+			requirement = {
+				kind = exactVersion;
+				version = 7.11.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F22200000000000000000002 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F22200000000000000000003 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 88A0B37E3083C5A60089A837 /* Project object */;
 	validationLevel = 1;
