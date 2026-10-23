@@ -2,6 +2,14 @@ import AVFoundation
 
 protocol AudioFileReading: Sendable {
     func read(_ url: URL) async throws -> Track
+    func readResult(_ url: URL) async throws -> AudioFileReadResult
+}
+
+extension AudioFileReading {
+    // 保留原读取器与测试替身兼容；只有带封面的适配器需要返回附加提示。
+    func readResult(_ url: URL) async throws -> AudioFileReadResult {
+        AudioFileReadResult(track: try await read(url))
+    }
 }
 
 enum AudioFileError: LocalizedError {

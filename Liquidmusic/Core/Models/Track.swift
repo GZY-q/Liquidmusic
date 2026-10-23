@@ -29,12 +29,18 @@ struct Track: Identifiable, Codable, Hashable, Sendable {
 }
 
 enum LibrarySection: String, CaseIterable, Identifiable, Sendable {
+    case recentlyAdded = "最近添加", recentlyPlayed = "最近播放", mostPlayed = "最常播放"
     case songs = "歌曲", albums = "专辑", artists = "艺术家", playlists = "播放列表"
     case allMusic = "所有音乐"
-    static let librarySections: [Self] = [.songs, .albums, .artists, .playlists]
+    static let librarySections: [Self] = [.recentlyAdded, .artists, .albums, .songs]
+    static let smartSections: [Self] = [.recentlyPlayed, .mostPlayed]
+    var isSmart: Bool { Self.smartSections.contains(self) }
     var id: Self { self }
     var symbol: String {
         switch self {
+        case .recentlyAdded: "clock"
+        case .recentlyPlayed: "clock.arrow.circlepath"
+        case .mostPlayed: "chart.bar"
         case .songs: "music.note"
         case .albums: "square.stack"
         case .artists: "music.mic"

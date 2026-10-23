@@ -314,6 +314,9 @@ final class LibraryScannerTests: XCTestCase {
         XCTAssertEqual(existing.first?.id, "stable-existing-id")
         XCTAssertEqual(existing.first?.title, "Legacy Song")
         XCTAssertNil(existing.first?.fileSize)
+        let preferences = try await store.preferences()
+        XCTAssertEqual(preferences, AppPreferences())
+        try await store.savePreferences(AppPreferences(crossfadeEnabled: true))
         var changed = try XCTUnwrap(existing.first)
         changed.fileSize = 1024
         let updated = try await store.upsertTracks([changed])
@@ -322,6 +325,8 @@ final class LibraryScannerTests: XCTestCase {
         let reopened = LibraryStore(location: .file(url))
         let retained = try await reopened.tracks()
         XCTAssertEqual(retained.first?.fileSize, 1024)
+        let restoredPreferences = try await reopened.preferences()
+        XCTAssertTrue(restoredPreferences.crossfadeEnabled)
         try await reopened.close()
     }
 

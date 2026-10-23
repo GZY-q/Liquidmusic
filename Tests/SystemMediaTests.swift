@@ -216,7 +216,7 @@ final class SystemMediaTests: XCTestCase {
 }
 
 @MainActor
-private final class RecordingMediaTransport: SystemMediaTransport {
+final class RecordingMediaTransport: SystemMediaTransport {
     struct Publication { let snapshot: NowPlayingSnapshot; let hasArtwork: Bool }
     var handler: (@Sendable (MediaCommand) -> MPRemoteCommandHandlerStatus)?
     var enabled = MediaCommandAvailability()

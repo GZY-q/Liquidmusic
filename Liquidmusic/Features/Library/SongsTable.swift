@@ -9,8 +9,10 @@ struct SongsTable: View {
     var body: some View {
         GeometryReader { geometry in
             Group {
-                if geometry.size.width >= 560 { table }
-                else { compactList }
+                if geometry.size.width >= 560 {
+                    if model.usesRankedOrder { rankedTable }
+                    else { table }
+                } else { compactList }
             }
             .contextMenu(forSelectionType: Track.ID.self) { ids in
                 Button("播放", systemImage: "play.fill") { model.play(ids, using: playback) }
@@ -32,29 +34,7 @@ struct SongsTable: View {
     private var table: some View {
         Table(model.result.tracks, selection: $selection, sortOrder: $model.sortOrder) {
             TableColumn("标题", sortUsing: TrackSort(field: .title)) { track in
-                HStack(spacing: 10) {
-                    ArtworkView(track: track, size: 32)
-                        .overlay {
-                            if hoveredTrackID == track.id {
-                                Button { model.play([track.id], using: playback) } label: {
-                                    Image(systemName: "play.fill").frame(width: 32, height: 32)
-                                }
-                                .buttonStyle(.borderless)
-                                .background(.regularMaterial, in: .rect(cornerRadius: 6))
-                                .help("播放「\(track.title)」")
-                                .accessibilityLabel("播放「\(track.title)」")
-                            }
-                        }
-                    Text(track.title).lineLimit(1)
-                        .help(track.title)
-                    Spacer(minLength: 0)
-                    if playback.currentTrack?.path == track.path {
-                        SoundWaveView(isPlaying: playback.isPlaying)
-                    }
-                }
-                .padding(.vertical, 4)
-                .contentShape(Rectangle())
-                .onHover { hover($0, track: track) }
+                titleCell(track)
             }.width(min: 180, ideal: 280)
             TableColumn("艺术家", sortUsing: TrackSort(field: .artist)) { track in
                 Text(track.artist).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
@@ -71,6 +51,42 @@ struct SongsTable: View {
                     .contentShape(Rectangle()).onHover { hover($0, track: track) }
             }.width(65)
         }
+        .tableStyle(.bordered)
+        .alternatingRowBackgrounds(.enabled)
+    }
+
+    private var rankedTable: some View {
+        // 智能列表采用固定排名，避免列标题显示与实际排名不一致的排序箭头。
+        Table(model.result.tracks, selection: $selection) {
+            TableColumn("标题") { titleCell($0) }.width(min: 180, ideal: 280)
+            TableColumn("艺术家") { Text($0.artist).lineLimit(1) }.width(min: 100, ideal: 160)
+            TableColumn("专辑") { Text($0.album).lineLimit(1).foregroundStyle(.secondary) }.width(min: 110, ideal: 180)
+            TableColumn("时长") { track in
+                Text(track.durationText).monospacedDigit().foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }.width(65)
+        }
+        .tableStyle(.bordered).alternatingRowBackgrounds(.enabled)
+    }
+
+    private func titleCell(_ track: Track) -> some View {
+        HStack(spacing: 10) {
+            ArtworkView(track: track, size: 20)
+                .overlay {
+                    if hoveredTrackID == track.id {
+                        Button { model.play([track.id], using: playback) } label: {
+                            Image(systemName: "play.fill").frame(width: 20, height: 20)
+                        }
+                        .buttonStyle(.borderless)
+                        .background(.regularMaterial, in: .rect(cornerRadius: 6))
+                        .help("播放「\(track.title)」").accessibilityLabel("播放「\(track.title)」")
+                    }
+                }
+            Text(track.title).lineLimit(1).help(track.title)
+            Spacer(minLength: 0)
+            if playback.currentTrack?.path == track.path { SoundWaveView(isPlaying: playback.isPlaying) }
+        }
+        .contentShape(Rectangle()).onHover { hover($0, track: track) }
     }
 
     private var compactList: some View {

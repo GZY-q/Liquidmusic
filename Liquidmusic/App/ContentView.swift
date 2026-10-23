@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @Bindable var model: AppModel
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.artworkDataLoader) private var loadArtwork
     @State private var browser: LibraryViewModel
     @State private var showsQueue = false
     @State private var showsFolders = false
@@ -18,14 +19,12 @@ struct ContentView: View {
     }
 
     var body: some View {
-        GeometryReader { _ in
-            VStack(spacing: 0) {
-                libraryBrowser
-                // 真实占据布局空间，避免侧边栏底部内容延伸到玻璃播放条下面。
-                PlayerBar(playback: model.playback, showsQueue: $showsQueue, usesQueuePopover: usesQueuePopover)
+        libraryBrowser
+            .safeAreaInset(edge: .top, spacing: 0) {
+                WindowDragArea().frame(height: 24)
             }
-        }
         .frame(minWidth: 640, minHeight: 520)
+        .navigationTitle(browser.title)
         .toolbarColorScheme(colorScheme, for: .windowToolbar)
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
             // 跨展示方式时收起面板，避免右侧面板与 popover 同时争用呈现状态。
@@ -36,7 +35,11 @@ struct ContentView: View {
             columnVisibility = .all
             searchRequest += 1
         }
-        .onChange(of: model.tracks, initial: true) { _, tracks in browser.replaceTracks(tracks) }
+        .onChange(of: model.tracks, initial: true) { _, tracks in
+            browser.replaceTracks(tracks)
+            if !tracks.isEmpty { model.activity.synchronize(tracks) }
+        }
+        .onChange(of: model.activity.records, initial: true) { _, records in browser.replaceActivity(records) }
         .sheet(isPresented: $showsFolders) {
             if let library = model.library { LibraryFoldersView(controller: library) }
         }
@@ -73,7 +76,7 @@ struct ContentView: View {
         @Bindable var browser = browser
         return NavigationSplitView(columnVisibility: $columnVisibility) {
             SidebarView(selection: $browser.section, searchText: $browser.query, trackCount: browser.trackCount,
-                        openAudioFile: model.openAudioFile, searchRequest: searchRequest)
+                        searchRequest: searchRequest)
         } detail: {
             LibraryView(model: browser, playback: model.playback,
                         connection: model.library?.state,
@@ -82,14 +85,27 @@ struct ContentView: View {
                         addFolder: addFolderAction,
                         manageFolders: model.library == nil ? nil : { showsFolders = true },
                         retry: model.library?.start,
-                        openAudioFile: model.openAudioFile)
+                        openAudioFile: model.openAudioFile, loadArtwork: loadArtwork)
             .toolbar {
-                Button("打开音频文件…", systemImage: "plus", action: model.openAudioFile)
-                if model.library != nil {
-                    Button("音乐文件夹", systemImage: "folder") { showsFolders = true }
+                Menu("添加音乐", systemImage: "plus") {
+                    Button("打开音频文件…", systemImage: "music.note", action: model.openAudioFile)
+                    if model.library != nil {
+                        Button("音乐文件夹", systemImage: "folder") { showsFolders = true }
+                    }
                 }
             }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                // 原生安全区为最后一行留出空间，侧边栏仍延伸到窗口底部。
+                PlayerBar(playback: model.playback, showsQueue: $showsQueue, usesQueuePopover: usesQueuePopover)
+            }
             .safeAreaInset(edge: .top, spacing: 0) {
+                if let error = model.activity.error {
+                    Label(error, systemImage: "exclamationmark.triangle")
+                        .font(.callout).padding().frame(maxWidth: .infinity, alignment: .leading).background(.bar)
+                }
+                if !model.importWarnings.isEmpty {
+                    AudioImportNotice(warnings: model.importWarnings, onDismiss: model.dismissImportWarnings)
+                }
                 if let library = model.library {
                     if let progress = library.scanProgress {
                         ImportProgressView(progress: progress, reports: library.scanReports,
@@ -127,14 +143,21 @@ struct ContentView: View {
     }
 }
 
-#Preview {
-    ContentView(model: AppModel(playback: PlaybackController(connectSystemMedia: false), tracks: SPXData.tracks), browser: .preview())
+#Preview("歌曲") {
+    ContentView(model: AppModel(playback: .preview(track: SPXData.tracks[0]), tracks: SPXData.tracks), browser: .preview())
         .frame(width: 1100, height: 680)
 }
 
 #Preview("窄窗口") {
-    ContentView(model: AppModel(playback: PlaybackController(connectSystemMedia: false), tracks: SPXData.tracks), browser: .preview())
+    ContentView(model: AppModel(playback: .preview(track: SPXData.tracks[0]), tracks: SPXData.tracks), browser: .preview())
         .frame(width: 640, height: 520)
+}
+
+#Preview("最近添加·专辑网格") {
+    ContentView(model: AppModel(playback: .preview(track: SPXArtwork.tracks[1]), tracks: SPXArtwork.tracks),
+                browser: .preview(section: .recentlyAdded, tracks: SPXArtwork.tracks))
+        .environment(\.artworkDataLoader, SPXArtwork.loader)
+        .frame(width: 1100, height: 700)
 }
 
 #Preview("空库") {

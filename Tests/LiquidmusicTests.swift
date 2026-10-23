@@ -3,6 +3,45 @@ import XCTest
 
 @MainActor
 final class LiquidmusicTests: XCTestCase {
+    func testProgressCadenceChangesWithoutLosingPlaybackOrPausedSeek() async throws {
+        let fixture = try AudioFixture(duration: 12)
+        defer { fixture.remove() }
+        let playback = PlaybackController(connectSystemMedia: false)
+        playback.volume = 0
+        defer { playback.shutdown() }
+        playback.play(fixture.track, in: [fixture.track])
+        try await eventually { playback.isPlaying }
+
+        // 观察真实音频时钟发布次数，防止普通播放恢复为高频 UI 更新。
+        func changes() async throws -> Int {
+            var previous = playback.elapsed
+            var count = 0
+            let deadline = ContinuousClock.now.advanced(by: .seconds(1.2))
+            while ContinuousClock.now < deadline {
+                try await Task.sleep(for: .milliseconds(10))
+                if playback.elapsed != previous {
+                    count += 1
+                    previous = playback.elapsed
+                }
+            }
+            return count
+        }
+        let ordinary = try await changes()
+        XCTAssertTrue((2...7).contains(ordinary), "普通播放发布次数：\(ordinary)")
+        playback.configureCrossfade(enabled: true, duration: 1)
+        let precise = try await changes()
+        XCTAssertTrue((2...7).contains(precise), "开启渐变也应限制 UI 发布次数：\(precise)")
+        playback.configureCrossfade(enabled: false, duration: 1)
+        let restored = try await changes()
+        XCTAssertTrue((2...7).contains(restored), "关闭渐变后发布次数：\(restored)")
+        playback.pause()
+        playback.seek(to: 7)
+        XCTAssertEqual(playback.elapsed, 7, accuracy: 0.01)
+        try await Task.sleep(for: .milliseconds(350))
+        XCTAssertEqual(playback.elapsed, 7, accuracy: 0.05)
+        XCTAssertEqual(playback.status, .paused)
+    }
+
     func testFileReaderLoadsWAVAndRejectsCorruptAndMissingFiles() async throws {
         let fixture = try AudioFixture(duration: 3)
         defer { fixture.remove() }

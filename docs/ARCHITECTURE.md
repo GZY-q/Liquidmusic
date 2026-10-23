@@ -4,20 +4,28 @@
 
 ## 1. 产品边界与布局
 
-第一阶段支持本地 m4a / mp3 / flac / wav / aiff（含 aif 扩展名）。通过 AVFoundation 判断文件实际是否可播放；不能解码的文件跳过并记录，不能仅凭扩展名宣称支持 FLAC。
+第一阶段支持本地 m4a / mp3 / flac / wav / aiff（含 aif 扩展名）。读取阶段通过 AVFoundation 的 isPlayable、音轨和时长预检，失败则跳过并记录；预检不保证完整解码成功，不能仅凭扩展名宣称支持 FLAC。实际播放时解码失败会显示错误并停在该条目，不自动跳过；交叉渐变准备失败不提前打断当前曲目，等自然换曲后再报告失败。
 
 窗口结构：
 
-- 左侧 Sidebar：搜索、歌曲/专辑/艺术家/播放列表固定入口、所有音乐、导入文件夹。
+- 左侧 Sidebar：搜索、最近添加/艺术家/专辑/歌曲，播放列表区固定“所有音乐”，智能列表区最近播放/最常播放；分组可折叠，选中与 hover 使用系统样式。打开音频保留工具栏添加菜单和 Command-O 入口。
 - 中间 Library：歌曲表格、专辑网格、艺术家列表及维度详情。
 - 右侧 Queue：可开关的原生布局面板，窄窗口从播放条按钮弹出。
-- 底部 Player：跨内容区域固定的玻璃播放条；封面点击打开大封面面板。
+- 底部 Player：内容区底部悬浮玻璃播放条；封面/曲名点击打开 Now Playing sheet，独立歌词按钮打开本地歌词，歌词页封面保留图片 popover。
 
 主体使用 `NavigationSplitView`，右侧队列不必永久占用一列。窄窗口可折叠侧边栏/队列，播放控件通过自适应布局保证不截断。允许设置合理的最小可用窗口尺寸。工具栏使用 `.toolbar`，列表使用 `Table`/`List`。系统色彩和材质跟随深浅色与辅助功能设置。
 
-M7 分开布局资料库与底部播放条，避免 sidebar 的安全区内容透入玻璃；窗口最小 640×520。外层 GeometryReader 测量完整窗口，资料库区域用原生 HStack/Divider 并列 NavigationSplitView 与队列；不足 900 点时队列改从按钮弹出，跨阈值自动收起。续验在系统 inspector 的宽窄切换中复现 AppKit 约束更新异常，因此不再使用 inspector。内容区不足 560 点时歌曲切为紧凑 List，选择、主操作、右键菜单与 Table 共用 VM 快照，排序菜单保留。
+播放条使用 NavigationSplitView detail 的底部 safeAreaInset，透明外边距形成悬浮效果，并为列表末行保留空间；侧边栏延伸到窗口底部。窗口默认 1100×700、最小 640×520，按内容最小尺寸自由缩放，不设阻挡大屏/全屏的硬性最大值。根 HStack 的 onGeometryChange 测量完整窗口，资料库区域用原生 HStack/Divider 并列 NavigationSplitView 与队列；不足 900 点时队列改从按钮弹出，跨阈值自动收起。续验在系统 inspector 的宽窄切换中复现 AppKit 约束更新异常，因此不再使用 inspector。内容区不足 560 点时歌曲切为紧凑 List，选择、主操作、右键菜单与 Table 共用 VM 快照，普通列表保留排序菜单，智能列表保持固定排名。
 
-播放条 ViewThatFits 在横排/两行中选择，窄布局音量放入可聚焦、支持 Escape/“完成”关闭的 popover。模式菜单用原生中文文字标题，避免 AX 名称回退到图标英文名。减少透明度或增加对比度时播放条改为语义不透明背景和边框；减少动态效果停用队列展开动画。Command-F 通过场景 focused value 展开边栏，再由可取消 task 等视图进入后聚焦，Escape 清除搜索/退出焦点；不安装全局键盘事件监听。
+播放条以 2026-10-23 最新截图为准，保持单行胶囊：左侧播放控制，中间 32 点封面/单行曲名和下沿进度，右侧省略号模式菜单/歌词/队列/音量。窄窗口曲名截尾；时间移入进度辅助功能值与悬停提示。背景直接使用系统 glassEffect(.regular, in: .capsule)，不叠加额外底色；减少透明度或增加对比度时仍完全不透明并显示边框。音量 popover 支持 Escape/“完成”。模式图标菜单保留中文辅助功能名称。Command-F 通过场景 focused value 展开边栏，再由可取消 task 等视图进入后聚焦，不安装全局键盘事件监听。
+
+UI1 的 NowPlayingView 为独立 Feature 视图：可用范围 460×520 至 760×900，默认 600×660，封面随高度调整；复用当前封面缓存、PlaybackController 和 PlaybackProgressView。模糊封面叠语义渐变背景，不新增提色任务或动画计时器；辅助功能高对比/减少透明度关闭装饰背景。玻璃控制使用系统 buttonStyle，歌词仍为本地读取。封面/歌曲变化由现有路径与条目标识隔离；关闭/Esc 只关闭面板，不中断播放。队列展开与歌词滚动动画使用 .snappy 并尊重减少动态效果。
+
+SlimPlaybackSlider 现为纯 SwiftUI View，使用系统 Slider 与 mini 控件尺寸，由系统绘制轨道和玻璃旋钮；不再使用自绘 NSSliderCell 或隐藏旋钮。拖动起止继续调用 PlaybackScrubState，左右键通过同一绑定跳转 5 秒，点击提供显式焦点。进度区保留 18 点高度以容纳原生控件；切换条目继续以 entryID 重建并拒绝旧回调。不增加计时器。
+
+播放刷新：关闭交叉渐变时 AVPlayer 观察间隔为 250ms；启用时保持 50ms 曲尾检测精度，开关时成对移除/重建观察者。两种模式下 UI 进度和定期媒体检查均限制为约 4Hz，曲尾检测直接读取音频时钟，相同进度不重复写入 Observation，seek 仍即时发布。重叠期间的 20ms 增益任务不变。声波使用 200ms periodic 时间线和固定尺寸 Canvas，不通过改变子视图高度驱动行布局；暂停/减少动态效果时不创建时间线。CPU 隔离采样条件和结果见 VALIDATION，不等同于 Apple Music 同条件对比。
+
+2026-10-23 性能补充：ArtworkView 按显示尺寸与 displayScale 请求 ArtworkThumbnailCache actor，ImageIO 后台生成最长边不超过 512 的缩略图；同内容/尺寸共享 CGImage，解码缓存成本目标 16 MiB，原压缩数据热缓存成本目标 8 MiB。NSCache 自动淘汰并非硬上限，视图仍持有当前图片。取消与代次在异步解码返回后再次核对。查询结果分组仅保存代表曲目与计数，不建立两套完整分组歌曲数组。UI1 将全宽 24 点 NSView 拖动带移入根视图顶部 safeAreaInset，替代 VStack/GeometryReader 嵌套，修复宽窗表头遮挡。仍通过 performDrag 使用系统窗口移动，不更改媒体时钟或系统三指设置。
 
 ## 2. 分层与依赖方向
 
@@ -44,7 +52,7 @@ flowchart TD
 
 `Core/Models` 不依赖 SwiftUI 或 AppKit；数据库适配放在 `Core/Library` 的扩展中。View 不直接操作 SQL、枚举文件或注册远程命令。
 
-AppModel 与 LibraryScanner 共用 AudioFileReader 的校验/标签实现；单文件入口跳过图片提取，扫描读取图片后交给 ArtworkCache。LibraryController 维护连接、授权、扫描状态和已加载的 tracks；AppModel 合并库内歌曲与临时打开歌曲，并按路径去重。ContentView 将 tracks 快照交给窗口内的 LibraryViewModel，后者仅负责查询/分组/导航，不另建扫描、数据库或授权状态。
+AppModel 与 LibraryScanner 共用 AudioFileReader 的校验/标签实现；真实单文件入口显式注入 ArtworkAudioFileReader，读取 metadata 后交给原 ArtworkCache。普通 AudioFileReader.read 仍不提取图片，留给默认测试/预览路径。AudioFileReading.readResult 默认兼容旧 read，适配器通过 AudioFileReadResult 返回本次图片/标签警告，AppModel 在代次检查后展示，避免共享“上次警告”串任务。LibraryController 维护连接、授权、扫描状态和已加载 tracks；AppModel 合并库内与临时歌曲，按路径去重，持久化同路径始终优先。ContentView 交 tracks 快照给窗口内 LibraryViewModel；查询层不另建扫描/数据库/授权。
 
 应用级状态由 LiquidmusicApp 持有 AppModel，唯一主窗口 Window(id: main) 和 MenuBarExtra 注入同一个 PlaybackController。M6 将原 WindowGroup 收敛为唯一主窗口，打开/恢复沿用相同窗口和浏览状态。系统媒体在真实 App 生命周期中幂等注册，Preview 显式注入未连接系统媒体的实例。
 
@@ -66,33 +74,42 @@ Liquidmusic/
       LibraryView.swift         已实现：状态、内容与维度详情切换
       SongsTable.swift          已实现：原生表格、排序与播放操作
       AlbumsView.swift          已实现：专辑网格
+      AlbumHeaderView.swift     AW2：专辑详情封面与标签
+      SPXArtwork.swift          AW2：只在内存绘图的封面预览数据与 loader
       ArtistsView.swift         已实现：艺术家列表
       ImportProgressView.swift  已实现：扫描进度与导入问题报告
+      AudioImportNotice.swift   AW3：单文件非阻断提示与关闭入口
       ScanReviewView.swift      已实现：覆盖/清理前审阅确认
     Player/
       ArtworkView.swift         封面与声波指示
-      PlayerBar.swift           播放条、传输控制、大封面
+      ArtworkLoadingState.swift  AW2：可取消候选加载、回退与迟到结果隔离
+      PlayerBar.swift           播放条、传输控制、歌词/Now Playing 入口
+      NowPlayingView.swift      UI1：大封面、渐变背景、玻璃控制与时间进度
       PlaybackProgressView.swift  已实现：进度编辑与旧滑块回调隔离
       QueueView.swift           队列与 MiniPlayerView
   Core/
     Models/Track.swift          Track、枚举、SPXData
     Models/LibraryQuery.swift   查询索引、比较器、维度标识和结果值类型
+    Models/AlbumArtwork.swift   AW1 已实现：候选、选择协议与可取消的纯值排序去重
     Models/PlaybackScrubState.swift  可测试的拖动/键盘进度编辑状态
     Models/LibraryFolder.swift  LibraryFolder、ImportIssue、授权状态值类型
     Models/LibraryScan.swift    文件指纹、元数据结果、进度、报告和扫描方案
+    Models/AudioFileReadResult.swift  AW3：单文件曲目与警告的 Sendable 结果
     Playback/
       AudioFileReader.swift     已实现：单文件异步校验/基础标签与临时授权
+      ArtworkAudioFileReader.swift  AW3：单次元数据/图片缓存适配，无数据库副作用
       PlaybackQueue.swift       已实现：UUID 队列、随机轮次、优先项和访问历史
       PlaybackController.swift  AVPlayer 与可观察状态
       SystemMediaController.swift
       SystemMediaTransport.swift  系统媒体边界、命令与快照值类型
     Library/
-      LibraryStore.swift        已实现：GRDB、v1_library 与 v2_fileFingerprint 迁移
+      LibraryStore.swift        GRDB：v1/v2 索引、v3 设置、v4 独立聆听记录迁移
+      LibraryPaths.swift        AW3：I/O actor 共用的 Application Support 目录定位
       FolderAccessController.swift  已实现：准备/提交/丢弃授权与租约生命周期
       LibraryScanner.swift      已实现：准备方案、去重、校验与提交
       ArtworkCache.swift        已实现：ImageIO 缩略图与有界数据缓存
-Tests/                          独立 XCTest target，89 项测试与合成素材/旧数据库快照
-LiquidmusicUITests/              独立 macOS XCUITest target，4 项实际 App 合成事件回归
+Tests/                          独立 XCTest target，逻辑/集成测试与合成素材/旧数据库快照
+LiquidmusicUITests/              独立 macOS XCUITest target，含原生设置的实际 App 合成事件回归
 Scripts/verify-ui.sh             构建 App + 本地 ad-hoc UI runner，按构建路径启动隔离 App
 ```
 
@@ -103,7 +120,7 @@ Scripts/verify-ui.sh             构建 App + 本地 ad-hoc UI runner，按构�
 - 先用有限并发（初版串行后台读取也可），禁止为整个音乐库一次性创建无限任务。
 - `Track`、扫描进度、导入问题等为 Sendable 值类型；不要跨 actor 传递可变 NSImage 或 AVPlayerItem。
 - 扫描任务可取消；换文件夹或新扫描不得让旧任务的结果覆盖新任务。使用任务 ID / generation 校验。
-- 播放器按应用生命周期保持唯一，观察者/通知/媒体命令必须有明确清理路径。若后续增加协议，应有实际测试或替换需求，避免空壳抽象。
+- PlaybackController 按应用生命周期保持唯一；交叉渐变期间由它持有两路 AVPlayer。观察者/通知/媒体命令必须有明确清理路径。若后续增加协议，应有实际测试或替换需求，避免空壳抽象。
 
 ## 4. 文件访问与持久化
 
@@ -126,6 +143,8 @@ LibraryController 只在真实 App start 时打开存储。Preview 不调用 sta
 | libraryFolder | id, bookmarkData, displayName, lastScanAt | 持久化授权来源 |
 | track | id, folderID, path, title, artist, album, albumArtist, duration, discNumber, trackNumber, artworkPath, modifiedAt, fileSize | id 主键，规范化文件路径唯一，folderID 可索引 |
 | importIssue | id, folderID, filePath, reason, occurredAt | 记录不支持、损坏、权限和元数据失败 |
+| appSettings | id, value | v3 新增；固定 id=1，JSON BLOB 保存 AppPreferences，不改歌曲索引 |
+| listeningActivity | path, addedAt, lastPlayedAt, playCount | UI1/v4 新增；按路径保存独立聆听记录，不修改 track 或音频 |
 
 LibraryStore 首次插入曲目时生成 UUID；后续按标准化且解析符号链接的路径去重并保留 UUID。单文件临时播放仍以路径为 ID，只有入库后才获得稳定 ID。文件移动先视作旧文件丢失和新文件加入，不实现跨路径移动识别。重复目录选择保留原文件夹 ID；重新授权不能占用另一条已有文件夹记录的位置。
 
@@ -149,11 +168,23 @@ LibraryStore 首次插入曲目时生成 UUID；后续按标准化且解析符�
 
 ### 封面
 
+2026-10-20 AW1–AW3 代码已实现：`Core/Models/AlbumArtwork.swift` 定义 Sendable 候选、纯选择协议与 AlbumArtworkSelector。后台 LibraryQueryIndex 初始化时按完整 AlbumIdentity 一次分组，预计算候选；只使用正碟号/曲号再按稳定 ID 排序，未知编号置后，排除空白路径并按原始路径去重，过程可取消且无 I/O。LibraryAlbum.artworkCandidates 与非空专辑 scope 的 LibraryQueryResult.albumArtworkCandidates 消费同一快照，搜索/排序不改变封面候选；普通或空结果 scope 的详情候选为空。representative/count 和播放快照语义保持原样。
+
+AW3 的 ArtworkAudioFileReader 在独立 actor 中调用一次 readMetadata，确有图片才延迟解析 Application Support/Liquidmusic/Artwork 并创建缓存对象。LibraryPaths 与数据库共用相同目录定位，不触发 SQLite 打开/迁移；无封面不碰缓存目录。图片失败返回非阻断警告，取消继续抛出；AppModel 的 AudioFileAccess 租约覆盖读取及缓存，generation/取消拒绝旧结果。真实 App 显式注入，AppRuntime 隔离分支与默认 AppModel 仍用普通 reader。现有库内同路径记录优先，新发现图片而旧索引缺图时提示重扫审阅，不回写已有 Track。提示条跟随本次导入，可关闭，新选择/取消清空旧提示。单文件只更新临时曲目；可能留下不可变的未引用缓存，仍不自动清理。
+
+AlbumsView 和 AlbumHeaderView 将完整候选路径交给 ArtworkView。它保留单曲 `track:size:` 入口，并通过 `.task(id: paths)` 调用 MainActor ArtworkLoadingState，generation/取消/离开视图防止串图，缺失或无法解码按序尝试下一候选，全失败占位。新路径组尚未调度时也隐藏旧图片。I/O 继续在 ArtworkCache actor，NSImage 仅 UI 侧构造；不增加第二个缓存。Data loader 可由参数或环境注入，LibraryView 将注入延续到歌曲行，SPXArtwork 预览只产生内存图片，不访问模拟文件。单曲与系统媒体仍显示自身 artworkPath，不回写同专辑其他曲目的图片。范围与验收见 `ALBUM_ARTWORK.md`；以下为现有缓存实现。
+
 metadata 图片通过 ImageIO 下采样为最长边 512 的 JPEG，写入 Application Support/Artwork。缓存按 SHA-256 + 尺寸版本命名，只新增，不覆盖旧文件；相同图片复用已有文件。原图数据超过 20MB 或超大像素面积会跳过并报告，音频仍可入库。ArtworkView 通过独立 actor 按需读取小图，NSCache 最多 160 项/32MB，NSImage 只在 UI 侧创建。取消扫描可能留下未引用的缓存文件，暂不自动删除。
 
 ScanReviewView 的 List 行使用显式 ZStack 容器稳定行结构，规避本机 Xcode Preview 的自定义不透明列表行崩溃；浅/深色预览均已验证。不要仅为去掉容器而回退该结构，除非重新验证预览和真实窗口。
 
 ## 5. 浏览行为（M4 已实现）
+
+UI1 扩展：LibraryViewModel 保存最多 100 条浏览位置（section/scope/displayMode），支持返回/前进与新分支清除前进栈；查询和普通排序保留当前设置。专辑/最近添加默认网格，其余歌曲入口默认列表；艺术家与固定播放列表不展示不适用的视图切换。
+
+ListeningActivityController 由 AppModel 持有，串行调用 LibraryStore 的 v4 表；资料库快照首次出现时以当前时间登记 addedAt，不冒充历史导入时间。PlaybackController 成功进入 playing 时按 loadGeneration 发布一次回调；暂停/恢复、seek、缓冲恢复不重复计数，手动重开、自然循环与播完重播计新一次，失败的准备项不计数。交叉渐变只记录已提升为当前播放器并实际开始的新曲。预览/隔离模式使用内存控制器，不打开真实 SQLite。
+
+最近播放按 lastPlayedAt 降序，最常播放按 playCount 降序、最近播放时间次序；仅包含当前资料库快照内已播放的曲目。最近添加按 addedAt 降序；相等值按既有稳定标题/ID 次序。搜索和维度过滤继续组合，专辑网格按匹配歌曲首项排名，完整专辑封面候选不变。排名列表使用无可点击排序头的 Table，避免标题排序箭头误导。记录写入失败显示明确提示，不切换空数据库；路径记录不自动清理，也不恢复已消失的临时歌曲。
 
 搜索实时匹配标题、艺术家和专辑，大小写/变音符号不敏感；中文直接做子串匹配，暂不做拼音检索。LibraryQueryWorker actor 缓存规范化后的字段，120ms debounce 合并连续输入；筛选、排序、分组均在后台执行。任务取消与 generation 校验共同拒绝迟到结果。View body 不执行全库过滤。
 
@@ -189,9 +220,25 @@ PlaybackQueue 的候选、优先项和历史全部使用 QueueEntry UUID，下�
 
 QueueView 从纯队列快照显示当前、接下来和历史；upcomingEntries 在副本中模拟本轮手动下一首，不推进真实随机源或无限展开循环。单曲循环显示手动切换顺序并提示自动重复。访问行使用位置区分同一条目的多次出现，跳转仍使用条目 UUID。List 的自定义行保留显式 ZStack，已验证可避开本机 Preview 的原生列表崩溃。
 
-PlaybackScrubState 只保存拖动期间的临时位置，释放后返回 seek 目标；无编辑手势的写入立即触发键盘/辅助功能 seek。PlaybackProgressView 绑定当前条目 ID，切歌重建 Slider 并拒绝旧闭包回调。M1 的 seekID/loadGeneration 继续保护 AVPlayer completion 和旧 item 通知；结束处理额外忽略 failed/ended 状态。循环、跳转与回退有真实 AVPlayer 静音集成测试，真实鼠标/键盘滑块手势和听音仍需人工验证。
+PlaybackScrubState 只保存拖动期间的临时位置，释放后返回 seek 目标；无编辑手势的写入立即触发辅助功能/原生 Slider seek。PlaybackProgressView 绑定当前条目 ID，切歌重建 Slider 并拒绝旧闭包回调。M7 非空桌面续验发现点击后方向键未推进显示时间，补充可聚焦 Slider、点击同时赋予焦点和左右键 −5/+5 秒处理；仍调用同一个 PlaybackController.seek，鼠标不量化到整数秒。M1 的 seekID/loadGeneration 继续保护 AVPlayer completion 和旧 item 通知；结束处理额外忽略 failed/ended 状态。循环、跳转与回退有真实 AVPlayer 静音集成测试，桌面合成事件已验证鼠标点击定位后键盘跳转；物理手势、完整 Tab/VoiceOver 和听音仍需人工验证。
 
-第一阶段尚未持久化音量/模式或整个队列，启动不自动播放；这些偏好可后续单独添加。
+S1 设置扩展已持久化启动音量、默认播放模式及交叉渐变偏好；播放条的临时音量/模式与整个队列不自动持久化，启动不自动播放。
+
+### S1 交叉渐入渐出
+
+2026-10-20 用户明确新增设置与交叉渐变。继续使用 AVPlayer，不接 AVAudioEngine、均衡器或声音增强器。默认关闭，默认时长 6 秒，设置范围为 1–12 秒。只处理自然换曲；单曲循环、没有后继或手动切换保持原语义。短曲的重叠上限为两曲各自时长的一半。
+
+PlaybackController 接近曲尾时推进 PlaybackQueue 副本、静音准备下一首，保留其 AudioFileAccess；准备阶段不消费真实队列。候选 readyToPlay 且进入重叠区间时，提交副本并将其 AVPlayer 提升为当前播放器，进度/封面/系统媒体转到新条目；旧播放器与授权保留至渐出结束。互补线性增益乘全局音量，以新曲的音频时间驱动渐变。暂停两路并停用渐变定时任务，恢复后按原位置继续。切歌/定位/关闭设置/失败/终止释放旧播放器；插队或模式变更丢弃未提交的准备项。时长调整用于下一次渐变，已开始的一次沿原时长完成。
+
+准备失败不提前打断当前曲，曲终按原错误路径提示下一首不可访问或无法解码，不无限跳过。切换时重新绑定观察者并校验播放器身份与 loadGeneration，旧结束通知不得重复推进队列。测试工厂可注入静音 AVPlayer，验证实际音量、暂停、释放和队列提交；实际听音与不同编码器的无缝感受仍需人工验收。
+
+### S1 原生设置
+
+SwiftUI Settings 场景提供系统应用菜单“设置…”与 Command-逗号，不在主窗口新增设置按钮。SettingsView 使用顶部“通用/播放/文件/高级”图标分页、系统字体与语义颜色；通用调整外观/菜单栏播放器，播放调整交叉渐变和默认模式，文件复用原 LibraryFoldersView，使用原审阅流程，高级调整下次启动音量。
+
+SettingsController 由 AppModel 持有，与 LibraryController 共用 LibraryStore actor。AppPreferences 是不依赖 SwiftUI 的 Codable/Sendable 值类型；SQLite 写入成功后才发布偏好，“取消”/关窗丢弃草稿，读写失败可见。读取失败禁止保存，避免以默认值静默替换已有设置。文件夹管理是立即执行的独立流程，不被设置“取消”撤销，界面有说明。隔离宿主/Preview 的 store 为 nil，只在内存编辑；真实 App 启动异步恢复，Preview 不打开真实库或注册媒体。
+
+2026-10-22 交互完善：SettingsController 只在内存记住最后分页，设置窗口提供 ⌘1–⌘4；通用/播放/高级的默认值恢复仅修改该页草稿，文件夹页无重置。外观草稿通过 SettingsView 的 preferredColorScheme 仅预览当前设置窗口，主窗口与菜单栏继续读取已保存值，保存后才全局应用。未修改草稿时“好”只关闭窗口；读取失败显示重试状态，保存期间禁用编辑并显示进度。导航、草稿和默认值恢复均不新增数据库字段。
 
 ## 7. 系统集成（M6 已实现，端到端人工验收待补）
 
@@ -213,3 +260,13 @@ WindowLifecycleController 只弱持有主窗口；Dock reopen 与菜单栏均恢
 - [Apple：windowShouldClose](https://developer.apple.com/documentation/appkit/nswindowdelegate/windowshouldclose(_:))
 
 实现时优先以本机 SDK 声明和实际编译为准，文档中的候选类型名不是可直接复制的完整实现。
+
+## 9. L1 本地歌词（2026-10-23 用户新增范围）
+
+LyricsParser / LyricsDocument 位于 Core/Models，不依赖 SwiftUI；支持分钟:秒的小数时间标签、多时间标签、同时间原文译文合并、空行间奏和 offset，普通文字使用纯文本展示。正 offset 提前、负 offset 延后，语义核对参考 [paroles 的 offset 说明](https://github.com/Clarkkkk/paroles#api)。不引入该库或其他依赖。时间行排序后通过二分查找定位当前句，首次时间前无高亮。输入与展开文本上限 1 MiB，标签/行不超过 10,000，合并文本一次 join，避免重复拼接的峰值开销。
+
+LyricsReader actor 只在打开歌词界面、重新读取或显式选择文件时运行。依次尝试同名 `.lrc` / `.LRC`，再用 `AVURLAsset.load(.lyrics)` 读取内嵌歌词；本地文件损坏仍尝试内嵌回退。手动文件使用有上限的 FileHandle 读取，支持 UTF-8 与带 BOM 的 UTF-16。读取前后配对 security scope；已有资料库根目录授权继续由 FolderAccessController 持有。没有歌词时是空状态，读取异常显示错误；只授权单音频的沙盒无法自动读取相邻 LRC 时，可手动选择文件。歌词不进入扫描事务、数据库或磁盘缓存，不修改音频及系统权限。
+
+LyricsModel 显式 MainActor/Observable，I/O 依赖可注入的 LyricsReading；每次加载清除旧文档，通过代次与 Task 取消拒绝旧结果。LyricsView 使用当前歌曲路径标识子视图，切歌重建加载状态，关闭时失效请求并释放文档；手动歌词只绑定本次查看，不做持久化关联。播放条或 Now Playing 的独立歌词按钮打开 600×460 原生 sheet，保留播放控制/进度、图片 popover 以及 Escape 关闭；不在歌词面板内递归打开 Now Playing。纯文本可选中；时间行点击沿原 PlaybackController.seek，回调核对歌曲路径。
+
+歌词高亮复用约 4Hz 的已有 elapsed，不创建计时器；只有当前行变化才滚动，LazyVStack 按需展示。用户滚动停用自动跟随，勾选恢复；减少动态效果时不使用滚动动画。Preview 注入内存示例文本，不读音频、开文件选择器、注册媒体或自动播放。自动化覆盖解析/读取/迟到与取消；实际 sheet、滚动手势、点击定位与签名沙盒授权仍待桌面人工验收。

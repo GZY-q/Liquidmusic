@@ -4,9 +4,11 @@ struct SidebarView: View {
     @Binding var selection: LibrarySection?
     @Binding var searchText: String
     var trackCount: Int
-    var openAudioFile: () -> Void
     var searchRequest = 0
     @FocusState private var isSearchFocused: Bool
+    @State private var libraryExpanded = true
+    @State private var playlistsExpanded = true
+    @State private var smartExpanded = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,20 +29,23 @@ struct SidebarView: View {
             }
             .padding(8).background(.quaternary, in: .rect(cornerRadius: 8)).padding(12)
             List(selection: $selection) {
-                Section("资料库") {
+                Section("资料库", isExpanded: $libraryExpanded) {
                     ForEach(LibrarySection.librarySections) { section in
-                        Label(section.rawValue, systemImage: section.symbol).tag(section)
+                        SidebarRow(section: section, isSelected: selection == section).tag(section)
                     }
                 }
-                Section("播放列表") {
-                    Label("所有音乐", systemImage: "music.note.list").tag(LibrarySection.allMusic)
+                Section("播放列表", isExpanded: $playlistsExpanded) {
+                    SidebarRow(section: .allMusic, isSelected: selection == .allMusic).tag(LibrarySection.allMusic)
+                }
+                Section("智能列表", isExpanded: $smartExpanded) {
+                    ForEach(LibrarySection.smartSections) { section in
+                        SidebarRow(section: section, isSelected: selection == section).tag(section)
+                    }
                 }
             }.listStyle(.sidebar)
-            VStack(alignment: .leading, spacing: 10) {
-                Text("\(trackCount) 首歌曲 · 本地资料库").font(.caption).foregroundStyle(.secondary)
-                Button("打开音频文件…", systemImage: "folder.badge.plus", action: openAudioFile)
-                    .buttonStyle(.borderless)
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
+            Text("\(trackCount) 首歌曲 · 本地资料库")
+                .font(.caption).foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading).padding(16)
         }
         .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 280)
         .task(id: searchRequest) {
@@ -50,6 +55,25 @@ struct SidebarView: View {
             guard !Task.isCancelled else { return }
             isSearchFocused = true
         }
+    }
+}
+
+private struct SidebarRow: View {
+    let section: LibrarySection
+    let isSelected: Bool
+    @State private var isHovering = false
+
+    var body: some View {
+        Label {
+            Text(section.rawValue).fontWeight(isSelected ? .semibold : .regular)
+        } icon: {
+            Image(systemName: section.symbol).foregroundStyle(.tint)
+        }
+        .padding(.vertical, 5)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .background(isHovering && !isSelected ? AnyShapeStyle(.quaternary) : AnyShapeStyle(.clear), in: .rect(cornerRadius: 6))
+        .onHover { isHovering = $0 }
     }
 }
 
@@ -64,4 +88,4 @@ extension FocusedValues {
     }
 }
 
-#Preview { SidebarView(selection: .constant(.songs), searchText: .constant(""), trackCount: 128, openAudioFile: {}).frame(width: 220, height: 600) }
+#Preview { SidebarView(selection: .constant(.songs), searchText: .constant(""), trackCount: 128).frame(width: 220, height: 600) }

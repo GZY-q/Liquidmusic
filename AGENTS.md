@@ -20,7 +20,7 @@
 - Liquid Glass 采用系统 API；侧边栏和工具栏优先使用系统提供的材质，不要层层叠加玻璃。
 - 每个 Feature 提供 `#Preview`，使用 `SPXData` 或等效 mock；预览不得注册媒体键、打开选择器、创建真实数据库或自动播放。
 - 代码注释用中文。模型与 SwiftUI 分离，业务逻辑可以单测。
-- 不实现流媒体、账号、歌词、均衡器、频谱或播放列表编辑。
+- 不实现流媒体、账号、均衡器、频谱或播放列表编辑。2026-10-23 用户明确追加本地 LRC／内嵌歌词及播放条歌词入口，歌词限于本地读取，不接入在线匹配。
 - 不遍历用户真实音乐文件夹做测试，不擅自移动/删除用户音频。使用临时测试文件与数据库。
 - 保持共享 scheme 的 TestAction `shouldUseLaunchSchemeArgsEnv="NO"` 与 `LIQUIDMUSIC_TESTING=1`；AppRuntime 对 XCTest/Preview 禁用真实库、菜单栏、窗口挂钩与媒体注册。媒体测试注入 SystemMediaTransport，不注册真实媒体键。
 - 桌面 UI 回归用 `bash Scripts/verify-ui.sh`；独立 LiquidmusicUITests target 按构建路径启动 App 并显式传隔离变量，避免误启其他 DerivedData 的同标识实例。UI runner 本地 ad-hoc 签名不等于真实签名沙盒验收；UI 合成事件不等于人工听音/硬件操作。

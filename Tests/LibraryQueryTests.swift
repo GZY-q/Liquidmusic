@@ -136,7 +136,7 @@ final class LibraryQueryTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(50))
         for model in models {
             XCTAssertFalse(model.isQuerying)
-            XCTAssertEqual(model.result.tracks.count, SPXData.tracks.count)
+            XCTAssertEqual(model.result.tracks.count, model.section?.isSmart == true ? 0 : SPXData.tracks.count)
         }
         XCTAssertEqual(detail.result.tracks.count, 2)
         XCTAssertFalse(detail.isQuerying)

@@ -29,6 +29,10 @@ extension ImportIssue: FetchableRecord, PersistableRecord {
     static let databaseTableName = "importIssue"
 }
 
+extension ListeningActivity: FetchableRecord, PersistableRecord {
+    static let databaseTableName = "listeningActivity"
+}
+
 // 所有磁盘访问都在独立 actor 上执行；初始化仅保存配置，不打开真实数据库。
 actor LibraryStore {
     private let location: LibraryLocation
@@ -38,6 +42,37 @@ actor LibraryStore {
     init(location: LibraryLocation) { self.location = location }
 
     func open() throws { _ = try connection() }
+
+    func listeningActivity(paths: [String], playedPath: String? = nil, at date: Date = .now) throws -> [String: ListeningActivity] {
+        try connection().write { db in
+            for path in Set(paths + (playedPath.map { [$0] } ?? [])) {
+                try db.execute(sql: "INSERT OR IGNORE INTO listeningActivity (path, addedAt, playCount) VALUES (?, ?, 0)",
+                               arguments: [path, date])
+            }
+            if let playedPath {
+                try db.execute(sql: "UPDATE listeningActivity SET lastPlayedAt = ?, playCount = playCount + 1 WHERE path = ?",
+                               arguments: [date, playedPath])
+            }
+            return Dictionary(uniqueKeysWithValues: try ListeningActivity.fetchAll(db).map { ($0.path, $0) })
+        }
+    }
+
+    func preferences() throws -> AppPreferences {
+        try connection().read { db in
+            guard let data = try Data.fetchOne(db, sql: "SELECT value FROM appSettings WHERE id = 1") else {
+                return AppPreferences()
+            }
+            return try JSONDecoder().decode(AppPreferences.self, from: data).normalized
+        }
+    }
+
+    func savePreferences(_ preferences: AppPreferences) throws {
+        let data = try JSONEncoder().encode(preferences.normalized)
+        try connection().write { db in
+            try db.execute(sql: "INSERT INTO appSettings (id, value) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET value = excluded.value",
+                           arguments: [data])
+        }
+    }
 
     func artworkDirectory() throws -> URL? {
         _ = try connection()
@@ -159,10 +194,7 @@ actor LibraryStore {
         case .memory:
             opened = try DatabaseQueue()
         case .applicationSupport:
-            let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
-                                                     appropriateFor: nil, create: true)
-            opened = try openFile(support.appendingPathComponent("Liquidmusic", isDirectory: true)
-                .appendingPathComponent("Library.sqlite"))
+            opened = try openFile(LibraryPaths.applicationSupportDirectory().appendingPathComponent("Library.sqlite"))
         case .file(let url):
             opened = try openFile(url)
         }
@@ -198,6 +230,20 @@ actor LibraryStore {
             try db.alter(table: "track") { table in table.add(column: "fileSize", .integer) }
         }
         // 迁移失败不保留半初始化连接，不启用自动清库或内存回退。
+        migrator.registerMigration("v3_appSettings") { db in
+            try db.create(table: "appSettings") { table in
+                table.primaryKey("id", .integer)
+                table.column("value", .blob).notNull()
+            }
+        }
+        migrator.registerMigration("v4_listeningActivity") { db in
+            try db.create(table: "listeningActivity") { table in
+                table.primaryKey("path", .text)
+                table.column("addedAt", .datetime).notNull()
+                table.column("lastPlayedAt", .datetime)
+                table.column("playCount", .integer).notNull().defaults(to: 0)
+            }
+        }
         try migrator.migrate(opened)
         database = opened
         return opened

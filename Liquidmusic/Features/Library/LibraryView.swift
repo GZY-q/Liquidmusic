@@ -10,19 +10,20 @@ struct LibraryView: View {
     var manageFolders: (() -> Void)?
     var retry: (() -> Void)?
     var openAudioFile: () -> Void = {}
+    var loadArtwork: ArtworkDataLoader = ArtworkLoadingState.cachedData
 
     var body: some View {
         VStack(spacing: 0) {
             if model.trackCount > 0 {
                 HStack(spacing: 12) {
-                    if model.scope != nil {
-                        Button("返回", systemImage: "chevron.left", action: model.goBack)
-                            .buttonStyle(.borderless)
-                    }
                     if let scope = model.scope {
                         Text(scope.subtitle).foregroundStyle(.secondary).lineLimit(1)
                     }
                     Text("\(model.result.tracks.count) 首歌曲").foregroundStyle(.secondary)
+                    if model.usesRankedOrder {
+                        Text(model.section == .recentlyAdded ? "按添加时间" : model.section == .mostPlayed ? "按播放次数" : "按最近播放时间")
+                            .foregroundStyle(.tertiary)
+                    }
                     Spacer()
                     if model.isQuerying {
                         ProgressView().controlSize(.small).accessibilityLabel("正在更新资料库视图")
@@ -34,21 +35,43 @@ struct LibraryView: View {
         }
         .navigationTitle(model.title)
         .toolbar {
-            if model.showsSongs && model.trackCount > 0 {
-                Menu("排序", systemImage: "arrow.up.arrow.down") {
-                    Picker("排序依据", selection: Binding(
-                        get: { model.sortOrder.first?.field ?? .title },
-                        set: { model.sortOrder = [TrackSort(field: $0, order: model.sortOrder.first?.order ?? .forward)] }
-                    )) {
-                        ForEach(TrackSortField.allCases) { Text($0.rawValue).tag($0) }
-                    }
-                    Toggle("降序", isOn: Binding(
-                        get: { model.sortOrder.first?.order == .reverse },
-                        set: { model.sortOrder = [TrackSort(field: model.sortOrder.first?.field ?? .title, order: $0 ? .reverse : .forward)] }
-                    ))
-                }.help("对当前歌曲列表排序")
+            ToolbarItemGroup(placement: .navigation) {
+                Button("返回", systemImage: "chevron.left", action: model.goBack)
+                    .disabled(!model.canGoBack).help("返回上一个视图")
+                    .keyboardShortcut("[", modifiers: .command)
+                Button("前进", systemImage: "chevron.right", action: model.goForward)
+                    .disabled(!model.canGoForward).help("前进到下一个视图")
+                    .keyboardShortcut("]", modifiers: .command)
+            }
+            if model.canChangeDisplayMode {
+                ToolbarItem(placement: .primaryAction) {
+                    Picker("视图", selection: $model.displayMode) {
+                        ForEach(LibraryDisplayMode.allCases) { mode in
+                            Label(mode.rawValue, systemImage: mode.symbol).tag(mode)
+                        }
+                    }.pickerStyle(.segmented).labelStyle(.iconOnly).frame(width: 76)
+                        .help("切换歌曲列表或专辑网格")
+                        .accessibilityIdentifier("library.displayMode")
+                }
+            }
+            if model.showsSongs && model.trackCount > 0 && !model.usesRankedOrder {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu("排序", systemImage: "arrow.up.arrow.down") {
+                        Picker("排序依据", selection: Binding(
+                            get: { model.sortOrder.first?.field ?? .title },
+                            set: { model.sortOrder = [TrackSort(field: $0, order: model.sortOrder.first?.order ?? .forward)] }
+                        )) {
+                            ForEach(TrackSortField.allCases) { Text($0.rawValue).tag($0) }
+                        }
+                        Toggle("降序", isOn: Binding(
+                            get: { model.sortOrder.first?.order == .reverse },
+                            set: { model.sortOrder = [TrackSort(field: model.sortOrder.first?.field ?? .title, order: $0 ? .reverse : .forward)] }
+                        ))
+                    }.help("对当前歌曲列表排序")
+                }
             }
         }
+        .environment(\.artworkDataLoader, loadArtwork)
     }
 
     @ViewBuilder private var content: some View {
@@ -68,12 +91,22 @@ struct LibraryView: View {
             } description: {
                 Text("没有与「\(model.query)」匹配的歌曲、艺术家或专辑。")
             } actions: { Button("清除搜索") { model.query = "" } }
+        } else if model.result.tracks.isEmpty && model.section?.isSmart == true {
+            ContentUnavailableView("还没有播放记录", systemImage: model.section?.symbol ?? "clock",
+                                   description: Text("播放资料库中的歌曲后，会自动显示在这里。"))
         } else if model.showsSongs {
-            SongsTable(model: model, playback: playback)
+            VStack(spacing: 0) {
+                if case .album(let album) = model.scope {
+                    AlbumHeaderView(album: album, paths: model.result.albumArtworkCandidates.map(\.cachePath),
+                                    loadArtwork: loadArtwork)
+                    Divider()
+                }
+                SongsTable(model: model, playback: playback)
+            }
         } else {
             switch model.section {
-            case .albums:
-                AlbumsView(albums: model.result.albums, onOpen: model.openAlbum)
+            case .albums, .songs, .allMusic, .recentlyAdded, .recentlyPlayed, .mostPlayed, nil:
+                AlbumsView(albums: model.result.albums, onOpen: model.openAlbum, loadArtwork: loadArtwork)
             case .artists:
                 ArtistsView(artists: model.result.artists, onOpen: model.openArtist)
             case .playlists:
@@ -92,7 +125,6 @@ struct LibraryView: View {
                         }.buttonStyle(.plain)
                     }
                 }
-            default: EmptyView()
             }
         }
     }
@@ -157,4 +189,12 @@ struct LibraryView: View {
 #Preview("资料库失败") {
     LibraryView(model: LibraryViewModel(), playback: PlaybackController(connectSystemMedia: false), connection: .failed("无法打开资料库，请检查磁盘空间后重试。"), retry: {})
         .frame(width: 700, height: 400)
+}
+
+#Preview("封面详情·窄窗") {
+    NavigationStack {
+        LibraryView(model: .preview(section: .albums, scope: .album(AlbumIdentity(SPXArtwork.tracks[0])),
+                                    tracks: SPXArtwork.tracks),
+                    playback: PlaybackController(connectSystemMedia: false), loadArtwork: SPXArtwork.loader)
+    }.frame(width: 400, height: 520)
 }

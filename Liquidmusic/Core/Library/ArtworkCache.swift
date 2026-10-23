@@ -25,7 +25,8 @@ actor ArtworkCache {
     init(directory: URL?) {
         self.directory = directory
         memory.countLimit = 160
-        memory.totalCostLimit = 32 * 1024 * 1024
+        // 展示端另有解码缩略图缓存，压缩数据只保留较小的热缓存。
+        memory.totalCostLimit = 8 * 1024 * 1024
     }
 
     func store(_ data: Data) throws -> String? {
